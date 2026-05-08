@@ -1,0 +1,509 @@
+[
+  {
+    "id": "compressor",
+    "name": "Compresor de Aire",
+    "category": "compressor",
+    "description": "Compresor que convierte energía en aire comprimido",
+    "inputs": [
+      {
+        "id": "energy_in",
+        "name": "Energía",
+        "type": "input",
+        "valueType": "energy",
+        "properties": [
+          {
+            "name": "power",
+            "type": "number",
+            "unit": "kW",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      },
+      {
+        "id": "aire_atmosferico",
+        "name": "Aire atmosferico",
+        "type": "input",
+        "valueType": "air",
+        "properties": [],
+        "position": {
+          "x": 0,
+          "y": 58
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "air_out",
+        "name": "Aire Comprimido",
+        "type": "output",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      },
+      {
+        "id": "residue_out",
+        "name": "Residuo (Agua + Aceite)",
+        "type": "output",
+        "valueType": "number",
+        "properties": [
+          {
+            "name": "amount",
+            "type": "number",
+            "unit": "L",
+            "required": false
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 58
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "power",
+        "label": "Potencia del Compresor",
+        "type": "number",
+        "unit": "kW",
+        "defaultValue": 7.5
+      },
+      {
+        "name": "model",
+        "label": "Modelo",
+        "type": "string",
+        "defaultValue": "Standard"
+      },
+      {
+        "name": "efficiency",
+        "label": "Eficiencia",
+        "type": "number",
+        "unit": "%",
+        "defaultValue": 85
+      }
+    ],
+    "width": 120,
+    "height": 100
+  },
+  {
+    "id": "tank",
+    "name": "Tanque de Almacenamiento",
+    "category": "tank",
+    "description": "Tanque para almacenar aire comprimido",
+    "inputs": [
+      {
+        "id": "air_in",
+        "name": "Entrada Aire",
+        "type": "input",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "air_out",
+        "name": "Salida Aire",
+        "type": "output",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "volume",
+        "label": "Volumen del Tanque",
+        "type": "number",
+        "unit": "L",
+        "defaultValue": 500
+      },
+      {
+        "name": "maxpressure",
+        "label": "Presión Máxima",
+        "type": "number",
+        "unit": "bar",
+        "defaultValue": 10
+      }
+    ],
+    "width": 110,
+    "height": 90
+  },
+  {
+    "id": "filter",
+    "name": "Filtro",
+    "category": "filter",
+    "description": "Filtra el aire comprimido",
+    "inputs": [
+      {
+        "id": "air_in",
+        "name": "Aire",
+        "type": "input",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "air_out",
+        "name": "Aire Filtrado",
+        "type": "output",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      },
+      {
+        "id": "residue_out",
+        "name": "Residuo",
+        "type": "output",
+        "valueType": "water",
+        "properties": [
+          {
+            "name": "amount",
+            "type": "number",
+            "unit": "L",
+            "required": false
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 58
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "filtertype",
+        "label": "Tipo de Filtro",
+        "type": "select",
+        "defaultValue": "standard",
+        "options": [
+          {
+            "label": "Estándar",
+            "value": "standard"
+          },
+          {
+            "label": "Cartucho",
+            "value": "cartridge"
+          },
+          {
+            "label": "Coalescente",
+            "value": "coalescing"
+          }
+        ]
+      }
+    ],
+    "width": 100,
+    "height": 90
+  },
+  {
+    "id": "regulator",
+    "name": "Regulador de Presión",
+    "category": "regulator",
+    "description": "Regula la presión del aire",
+    "inputs": [
+      {
+        "id": "air_in",
+        "name": "Aire",
+        "type": "input",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "air_out",
+        "name": "Aire Regulado",
+        "type": "output",
+        "valueType": "air",
+        "properties": [
+          {
+            "name": "flow",
+            "type": "number",
+            "unit": "m³/min",
+            "required": true
+          },
+          {
+            "name": "pressure",
+            "type": "number",
+            "unit": "bar",
+            "required": true
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "setpoint",
+        "label": "Presión de Salida",
+        "type": "number",
+        "unit": "bar",
+        "defaultValue": 6
+      }
+    ],
+    "width": 100,
+    "height": 80
+  },
+  {
+    "id": "custom_1777915119786",
+    "name": "Maquinado",
+    "category": "custom",
+    "description": "Baker",
+    "inputs": [
+      {
+        "id": "input_1",
+        "name": "Entrada 1",
+        "type": "input",
+        "valueType": "number",
+        "properties": [
+          {
+            "name": "caudal",
+            "type": "number",
+            "required": false
+          }
+        ],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "output_1",
+        "name": "Salida 1",
+        "type": "output",
+        "valueType": "number",
+        "properties": [
+          {
+            "name": "galletas",
+            "type": "number",
+            "required": false
+          }
+        ],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "ropiedad_1",
+        "label": "Ropiedad 1",
+        "type": "number",
+        "defaultValue": 0
+      }
+    ],
+    "width": 141,
+    "height": 100
+  },
+  {
+    "id": "custom_1778004547878",
+    "name": "Laminador",
+    "category": "Laminador",
+    "description": "Laminador",
+    "inputs": [
+      {
+        "id": "masa",
+        "name": "Masa",
+        "type": "input",
+        "valueType": "number",
+        "properties": [],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "galletas",
+        "name": "Galletas",
+        "type": "output",
+        "valueType": "number",
+        "properties": [],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "rpm",
+        "label": "RPM",
+        "type": "number",
+        "defaultValue": 33,
+        "unit": "rpm"
+      }
+    ],
+    "width": 100,
+    "height": 300
+  },
+  {
+    "id": "custom_1778004679923",
+    "name": "Amasadora",
+    "category": "custom",
+    "description": "",
+    "inputs": [
+      {
+        "id": "aire",
+        "name": "Aire",
+        "type": "input",
+        "valueType": "air",
+        "properties": [],
+        "position": {
+          "x": 0,
+          "y": 30
+        }
+      },
+      {
+        "id": "agua",
+        "name": "Agua",
+        "type": "input",
+        "valueType": "air",
+        "properties": [],
+        "position": {
+          "x": 0,
+          "y": 58
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "id": "output_1",
+        "name": "Salida 1",
+        "type": "output",
+        "valueType": "air",
+        "properties": [],
+        "position": {
+          "x": 100,
+          "y": 30
+        }
+      }
+    ],
+    "configProperties": [
+      {
+        "name": "volumen",
+        "label": "Volumen",
+        "type": "number",
+        "defaultValue": 500
+      },
+      {
+        "name": "tiempo",
+        "label": "Tiempo",
+        "type": "number",
+        "defaultValue": 20,
+        "unit": "min"
+      }
+    ],
+    "width": 140,
+    "height": 100
+  }
+]
