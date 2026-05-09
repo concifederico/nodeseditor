@@ -9,7 +9,7 @@
         "id": "energy_in",
         "name": "Energía",
         "type": "input",
-        "valueType": "energy",
+        "valueType": "number",
         "properties": [
           {
             "name": "power",
@@ -27,7 +27,7 @@
         "id": "aire_atmosferico",
         "name": "Aire atmosferico",
         "type": "input",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [],
         "position": {
           "x": 0,
@@ -40,7 +40,7 @@
         "id": "air_out",
         "name": "Aire Comprimido",
         "type": "output",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -114,7 +114,7 @@
         "id": "air_in",
         "name": "Entrada Aire",
         "type": "input",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -140,7 +140,7 @@
         "id": "air_out",
         "name": "Salida Aire",
         "type": "output",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -190,7 +190,7 @@
         "id": "air_in",
         "name": "Aire",
         "type": "input",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -216,7 +216,7 @@
         "id": "air_out",
         "name": "Aire Filtrado",
         "type": "output",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -240,7 +240,7 @@
         "id": "residue_out",
         "name": "Residuo",
         "type": "output",
-        "valueType": "water",
+        "valueType": "number",
         "properties": [
           {
             "name": "amount",
@@ -290,7 +290,7 @@
         "id": "air_in",
         "name": "Aire",
         "type": "input",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -316,7 +316,7 @@
         "id": "air_out",
         "name": "Aire Regulado",
         "type": "output",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [
           {
             "name": "flow",
@@ -456,7 +456,7 @@
         "id": "aire",
         "name": "Aire",
         "type": "input",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [],
         "position": {
           "x": 0,
@@ -467,7 +467,7 @@
         "id": "agua",
         "name": "Agua",
         "type": "input",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [],
         "position": {
           "x": 0,
@@ -480,7 +480,7 @@
         "id": "output_1",
         "name": "Salida 1",
         "type": "output",
-        "valueType": "air",
+        "valueType": "number",
         "properties": [],
         "position": {
           "x": 100,

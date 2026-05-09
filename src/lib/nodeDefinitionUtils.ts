@@ -57,6 +57,7 @@ export function createBlankNodeDefinition(): NodeDefinition {
     inputs: [createConnector('input', 0)],
     outputs: [createConnector('output', 0)],
     configProperties: [],
+    defaultScript: 'result = inputs\n',
     width: 140,
     height: 100,
   };
@@ -95,6 +96,11 @@ export function normalizeNodeDefinition(definition: NodeDefinition): NodeDefinit
     description: definition.description.trim(),
     inputs,
     outputs,
+    defaultScript: `${definition.defaultScript ?? ''}`.trim(),
+    parameters:
+      definition.parameters && typeof definition.parameters === 'object'
+        ? definition.parameters
+        : undefined,
     configProperties: definition.configProperties.map((property, index) => ({
       ...property,
       name: slugifyNodePart(property.name || property.label, `property_${index + 1}`),

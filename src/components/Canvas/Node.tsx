@@ -28,6 +28,10 @@ export default function Node({
   const height = definition.height || 100;
   const displayName = node.name?.trim() || definition.name;
   const displayClass = definition.name;
+  const outputPreview =
+    node.output === undefined || node.output === null
+      ? null
+      : JSON.stringify(node.output).slice(0, 42);
 
   // Calculate connector positions
   const inputConnectors = definition.inputs;
@@ -159,6 +163,32 @@ export default function Node({
         stroke="#475569"
         strokeWidth="1"
       />
+
+      {(outputPreview || node.lastError) && (
+        <g>
+          <rect
+            x="6"
+            y={height - 26}
+            width={width - 12}
+            height="18"
+            rx="6"
+            fill={node.lastError ? '#450a0a' : '#0f766e'}
+            opacity="0.95"
+          />
+          <text
+            x={10}
+            y={height - 14}
+            textAnchor="start"
+            fill="white"
+            fontSize="8"
+            fontWeight="bold"
+          >
+            {node.lastError
+              ? `Error: ${node.lastError.slice(0, 28)}`
+              : `Out: ${outputPreview}`}
+          </text>
+        </g>
+      )}
 
       {/* Input connectors */}
       {inputConnectors.map((connector, index) => {

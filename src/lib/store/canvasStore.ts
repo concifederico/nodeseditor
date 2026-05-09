@@ -23,6 +23,16 @@ interface CanvasStore {
   updateNodeName: (nodeId: string, name: string) => void;
   updateNodePosition: (nodeId: string, x: number, y: number) => void;
   updateNodeConfig: (nodeId: string, config: Record<string, string | number | boolean>) => void;
+  updateNodeScriptOverride: (nodeId: string, scriptOverride: string | undefined) => void;
+  updateNodeExecutionResult: (
+    nodeId: string,
+    payload: {
+      output: unknown;
+      outputByConnector?: Record<string, unknown>;
+      error?: string | null;
+    }
+  ) => void;
+  clearSimulationResults: () => void;
   updateNodeResourceUtilization: (nodeId: string, utilization: number) => void;
   updateNodeCustomType: (nodeId: string, customType: string) => void;
   
@@ -109,6 +119,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       y,
       config,
       connectorValues: {},
+      scriptOverride: undefined,
+      output: null,
+      outputByConnector: {},
+      lastError: null,
     };
 
     set((state) => ({
@@ -163,6 +177,52 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         nodes: state.canvas.nodes.map((n) =>
           n.id === nodeId ? { ...n, config: { ...n.config, ...config } } : n
         ),
+        updatedAt: Date.now(),
+      },
+    })),
+
+  updateNodeScriptOverride: (nodeId: string, scriptOverride: string | undefined) =>
+    set((state) => ({
+      canvas: {
+        ...state.canvas,
+        nodes: state.canvas.nodes.map((n) =>
+          n.id === nodeId ? { ...n, scriptOverride, lastError: null } : n
+        ),
+        updatedAt: Date.now(),
+      },
+    })),
+
+  updateNodeExecutionResult: (nodeId: string, payload) =>
+    set((state) => ({
+      canvas: {
+        ...state.canvas,
+        nodes: state.canvas.nodes.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                output: payload.output as NodeInstance['output'],
+                outputByConnector:
+                  (payload.outputByConnector as NodeInstance['outputByConnector']) ?? {},
+                lastError: payload.error ?? null,
+                lastRunAt: Date.now(),
+              }
+            : n
+        ),
+        updatedAt: Date.now(),
+      },
+    })),
+
+  clearSimulationResults: () =>
+    set((state) => ({
+      canvas: {
+        ...state.canvas,
+        nodes: state.canvas.nodes.map((n) => ({
+          ...n,
+          output: null,
+          outputByConnector: {},
+          lastError: null,
+          lastRunAt: undefined,
+        })),
         updatedAt: Date.now(),
       },
     })),

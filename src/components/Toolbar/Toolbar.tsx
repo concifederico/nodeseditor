@@ -7,11 +7,15 @@ import { Save, Trash2, Plus } from 'lucide-react';
 interface ToolbarProps {
   onSave: () => void;
   onLoad: () => void;
+  onRun: () => void;
+  isRunning: boolean;
 }
 
 export default function Toolbar({
   onSave,
   onLoad,
+  onRun,
+  isRunning,
 }: ToolbarProps) {
   const addNode = useCanvasStore((state) => state.addNode);
   const clearCanvas = useCanvasStore((state) => state.clearCanvas);
@@ -64,6 +68,15 @@ export default function Toolbar({
         >
           <Plus size={16} />
           Cargar
+        </button>
+        <button
+          onClick={onRun}
+          disabled={isRunning}
+          className="flex items-center gap-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-900 text-slate-950 rounded text-sm transition"
+          title="Ejecutar simulación"
+        >
+          <Plus size={16} />
+          {isRunning ? 'Corriendo...' : 'Ejecutar'}
         </button>
         <button
           onClick={clearCanvas}

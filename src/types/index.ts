@@ -2,6 +2,11 @@
 export type ConnectorType = 'input' | 'output';
 export type ConnectorValueType = 'energy' | 'air' | 'water' | 'number' | 'string' | 'boolean';
 export type ConfigPropertyType = 'number' | 'string' | 'select' | 'boolean';
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
 
 // Connector with properties
 export interface ConnectorProperty {
@@ -41,6 +46,7 @@ export interface ConfigPropertyDefinition {
 // Node definition (template)
 export interface NodeDefinition {
   id: string;
+  slug?: string;
   name: string;
   category: NodeCategory;
   description: string;
@@ -48,6 +54,8 @@ export interface NodeDefinition {
   outputs: Connector[];
   // Properties that are configurable fields within the node
   configProperties: ConfigPropertyDefinition[];
+  defaultScript?: string;
+  parameters?: JsonObject;
   icon?: string;
   width?: number;
   height?: number;
@@ -64,6 +72,11 @@ export interface NodeInstance {
   config: Record<string, string | number | boolean>;
   // Connector values (state)
   connectorValues: Record<string, string | number | boolean>;
+  scriptOverride?: string;
+  output?: JsonValue;
+  outputByConnector?: Record<string, JsonValue>;
+  lastRunAt?: number;
+  lastError?: string | null;
   // Resource utilization percentage (0-100)
   resourceUtilization?: number;
   // Custom node type
@@ -87,6 +100,7 @@ export interface CanvasState {
   description?: string;
   nodes: NodeInstance[];
   connections: Connection[];
+  userId?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -101,4 +115,37 @@ export interface UIState {
   panX: number;
   panY: number;
   draggedNodeDefId: string | null;
+}
+
+export interface DiagramRecord {
+  id: string;
+  name: string;
+  description?: string | null;
+  nodes: NodeInstance[];
+  connections: Connection[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserStats {
+  id: string;
+  email: string;
+  name: string | null;
+  role: 'USER' | 'ADMIN';
+  createdAt: string;
+  lastLoginAt: string | null;
+  totalSimulationMs: number;
+  diagramCount: number;
+}
+
+export interface AdminActivityPoint {
+  date: string;
+  diagramsCreated: number;
+  userRegistrations: number;
+  logins: number;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUserStats[];
+  activity: AdminActivityPoint[];
 }

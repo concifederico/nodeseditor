@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(cuid())
+  name              String?
+  email             String         @unique
+  emailVerified     DateTime?      @map("email_verified")
+  image             String?
+  passwordHash      String?        @map("password_hash")
+  role              String         @default("USER")
+  lastLoginAt       DateTime?      @map("last_login_at")
+  totalSimulationMs Int            @default(0) @map("total_simulation_ms")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  accounts          Account[]
+  sessions          Session[]
+  diagrams          Diagram[]
+  activities        UserActivity[]
+  blocksCreated     Block[]        @relation("BlockCreator")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Diagram {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  nodes       Json
+  connections Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+  @@map("diagrams")
+}
+
+model Block {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  category       String
+  description    String
+  inputs         Json
+  outputs        Json
+  configProperties Json   @map("config_properties")
+  defaultScript  String   @default("") @map("default_script")
+  parameters     Json?
+  icon           String?
+  width          Int?
+  height         Int?
+  createdById    String?  @map("created_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdBy      User?    @relation("BlockCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@map("blocks")
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@map("user_activities")
+}

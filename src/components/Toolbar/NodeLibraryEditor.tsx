@@ -13,14 +13,17 @@ import {
 import { Plus, Save } from 'lucide-react';
 
 interface NodeLibraryEditorProps {
-  onPersistDefinitions: (definitions: NodeDefinition[]) => Promise<void>;
+  onPersistDefinitions: (
+    definitions: NodeDefinition[],
+    activeDefinition: NodeDefinition
+  ) => Promise<void>;
   isSaving: boolean;
 }
 
 type TabDraft = NodeDefinition;
 
 const CONFIG_TYPES: ConfigPropertyType[] = ['string', 'number', 'boolean', 'select'];
-const CONNECTOR_TYPES = ['air', 'energy', 'water', 'number', 'string', 'boolean'] as const;
+const CONNECTOR_TYPES = ['number', 'string', 'boolean'] as const;
 
 export default function NodeLibraryEditor({
   onPersistDefinitions,
@@ -60,7 +63,7 @@ export default function NodeLibraryEditor({
     setNodeDefinitions(nextDefinitions);
     setSelectedDefinitionId(savedDefinition.id);
     setDraft(structuredClone(savedDefinition));
-    await onPersistDefinitions(nextDefinitions);
+    await onPersistDefinitions(nextDefinitions, savedDefinition);
   };
 
   const handleSelectDefinition = (definitionId: string) => {
@@ -458,6 +461,16 @@ export default function NodeLibraryEditor({
                   }
                   className="w-full px-3 py-2 bg-slate-800 text-white rounded text-sm border border-slate-600 min-h-24"
                   placeholder="Descripción"
+                />
+
+                <textarea
+                  value={draft.defaultScript ?? ''}
+                  onChange={(e) =>
+                    updateDraft((current) => ({ ...current, defaultScript: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 bg-slate-800 text-white rounded text-sm border border-slate-600 min-h-40 font-mono"
+                  placeholder="Script Python por defecto del bloque"
+                  spellCheck={false}
                 />
 
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
