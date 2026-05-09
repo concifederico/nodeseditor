@@ -59,14 +59,49 @@ async function runScript(
 
   try {
     const result = await instance.runPythonAsync(`
-locals_ns = {"inputs": __node_inputs__, "config": __node_config__}
+# Preparar namespace local con inputs y config disponibles directamente
+locals_ns = {}
+
+# Agregar inputs como variables individuales
+if isinstance(__node_inputs__, dict):
+    for key, value in __node_inputs__.items():
+        locals_ns[key] = value
+
+# Agregar config como variables individuales
+if isinstance(__node_config__, dict):
+    for key, value in __node_config__.items():
+        locals_ns[key] = value
+
+# También mantener referencias a inputs y config como objetos
+locals_ns["inputs"] = __node_inputs__
+locals_ns["config"] = __node_config__
+
+# Ejecutar el script del usuario
 exec(__node_script__, {}, locals_ns)
+
+# Determinar qué retornar
 if "main" in locals_ns and callable(locals_ns["main"]):
+    # Si hay función main, usarla
     __node_result__ = locals_ns["main"](__node_inputs__, __node_config__)
 elif "result" in locals_ns:
+    # Si hay variable result, usarla
     __node_result__ = locals_ns["result"]
 else:
-    raise ValueError("El script debe definir 'result' o una función main(inputs, config).")
+    # Extraer variables definidas por el usuario (que no son funciones ni privadas)
+    system_vars = {"inputs", "config", "__node_inputs__", "__node_config__", "__node_script__", "main"}
+    user_variables = {}
+    
+    for key, value in locals_ns.items():
+        # Incluir si no es variable de sistema, no comienza con _ y no es callable
+        if key not in system_vars and not key.startswith("_") and not callable(value):
+            user_variables[key] = value
+    
+    if user_variables:
+        # Si hay variables definidas, devolverlas como outputs
+        __node_result__ = {"outputs": user_variables}
+    else:
+        raise ValueError("El script debe definir 'result', una función main(inputs, config), o al menos una variable de salida.")
+
 __node_result__
 `);
 

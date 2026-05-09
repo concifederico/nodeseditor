@@ -10,7 +10,7 @@ import {
   normalizeNodeDefinitions,
   slugifyNodePart,
 } from '@/lib/nodeDefinitionUtils';
-import { Plus, Save } from 'lucide-react';
+import { Plus, Save, Trash2 } from 'lucide-react';
 
 interface NodeLibraryEditorProps {
   onPersistDefinitions: (
@@ -66,12 +66,19 @@ export default function NodeLibraryEditor({
     await onPersistDefinitions(nextDefinitions, savedDefinition);
   };
 
-  const handleSelectDefinition = (definitionId: string) => {
-    const selected = nodeDefinitions.find((definition) => definition.id === definitionId);
-    if (!selected) return;
+  const handleDeleteDefinition = async () => {
+    if (!selectedDefinitionId) return;
+    if (!confirm(`¿Estás seguro de que deseas eliminar este nodo? Esta acción no se puede deshacer.`))
+      return;
 
-    setSelectedDefinitionId(definitionId);
-    setDraft(structuredClone(selected));
+    const nextDefinitions = nodeDefinitions.filter(
+      (definition) => definition.id !== selectedDefinitionId
+    );
+
+    setNodeDefinitions(nextDefinitions);
+    setSelectedDefinitionId(null);
+    setDraft(null);
+    await onPersistDefinitions(nextDefinitions, nextDefinitions[0] || createBlankNodeDefinition());
   };
 
   const renderConnectorSection = (type: ConnectorType) => {
@@ -504,15 +511,27 @@ export default function NodeLibraryEditor({
 
               {renderConfigProperties()}
 
-              <button
-                type="button"
-                onClick={handleSaveDefinition}
-                disabled={isSaving}
-                className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-900 text-white rounded text-sm flex items-center justify-center gap-2"
-              >
-                <Save size={16} />
-                {isSaving ? 'Guardando biblioteca...' : 'Guardar nodo en biblioteca'}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleSaveDefinition}
+                  disabled={isSaving}
+                  className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-900 text-white rounded text-sm flex items-center justify-center gap-2"
+                >
+                  <Save size={16} />
+                  {isSaving ? 'Guardando biblioteca...' : 'Guardar nodo en biblioteca'}
+                </button>
+                {selectedDefinitionId && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteDefinition}
+                    className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-sm flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={16} />
+                    Eliminar
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
