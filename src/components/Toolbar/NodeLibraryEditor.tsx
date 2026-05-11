@@ -45,6 +45,16 @@ export default function NodeLibraryEditor({
     setDraft(freshDefinition);
   };
 
+  const handleSelectDefinition = (definitionId: string) => {
+    const selectedDefinition = nodeDefinitions.find(
+      (definition) => definition.id === definitionId
+    );
+    if (selectedDefinition) {
+      setSelectedDefinitionId(definitionId);
+      setDraft(structuredClone(selectedDefinition));
+    }
+  };
+
   const handleSaveDefinition = async () => {
     if (!draft) return;
 

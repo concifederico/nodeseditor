@@ -44,11 +44,21 @@ export async function executeGraphSequentially(params: {
       inputs[connection.targetConnectorId] = connectedValue;
     }
 
+    // Build complete config including all definition properties with their current or default values
+    const config: Record<string, unknown> = { ...node.config };
+    if (definition) {
+      for (const prop of definition.configProperties) {
+        if (!(prop.name in config)) {
+          config[prop.name] = prop.defaultValue;
+        }
+      }
+    }
+
     const rawOutput = await params.runPythonScript(
       resolveNodeScript(node, definition),
       inputs,
       {
-        config: node.config,
+        config,
         timeoutMs: 4_000,
       }
     );
