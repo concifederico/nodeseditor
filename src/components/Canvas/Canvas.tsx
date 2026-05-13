@@ -296,6 +296,7 @@ export default function Canvas() {
                 node={node}
                 definition={definition}
                 isSelected={ui.selectedNodeId === node.id}
+                isOptimized={ui.optimizedNodeIds.includes(node.id)}
                 onSelect={() => selectNode(node.id)}
                 onDelete={() => removeNode(node.id)}
                 onMouseDown={(e) => handleNodeMouseDown(node.id, e)}

@@ -2,28 +2,33 @@
 
 import React from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { Save, Trash2, Plus } from 'lucide-react';
+import { Save, Trash2, FolderOpen } from 'lucide-react';
+import OptimizationPanel from '@/components/Toolbar/OptimizationPanel';
 
 interface ToolbarProps {
   onSave: () => void;
   onLoad: () => void;
-  onRun: () => void;
-  isRunning: boolean;
+  userId: string;
+  runPython: (
+    script: string,
+    inputs: Record<string, unknown>,
+    options?: { config?: Record<string, unknown>; timeoutMs?: number }
+  ) => Promise<unknown>;
 }
 
 export default function Toolbar({
   onSave,
   onLoad,
-  onRun,
-  isRunning,
+  userId,
+  runPython,
 }: ToolbarProps) {
   const addNode = useCanvasStore((state) => state.addNode);
   const clearCanvas = useCanvasStore((state) => state.clearCanvas);
   const setCanvasName = useCanvasStore((state) => state.setCanvasName);
   const canvas = useCanvasStore((state) => state.canvas);
+  const nodeDefinitions = useCanvasStore((state) => state.nodeDefinitions);
   const setDraggedNodeDef = useCanvasStore((state) => state.setDraggedNodeDef);
   const draggedNodeDef = useCanvasStore((state) => state.ui.draggedNodeDefId);
-  const nodeDefinitions = useCanvasStore((state) => state.nodeDefinitions);
 
   const handleDragStart = (definitionId: string) => {
     setDraggedNodeDef(definitionId);
@@ -66,17 +71,8 @@ export default function Toolbar({
           className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition"
           title="Cargar proyecto"
         >
-          <Plus size={16} />
+          <FolderOpen size={16} />
           Cargar
-        </button>
-        <button
-          onClick={onRun}
-          disabled={isRunning}
-          className="flex items-center gap-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-900 text-slate-950 rounded text-sm transition"
-          title="Ejecutar simulación"
-        >
-          <Plus size={16} />
-          {isRunning ? 'Corriendo...' : 'Ejecutar'}
         </button>
         <button
           onClick={clearCanvas}
@@ -88,37 +84,40 @@ export default function Toolbar({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-white font-bold text-sm mb-3">Componentes</h3>
-        <div className="space-y-2">
-          {nodeDefinitions.map((def) => {
-            return (
-              <div
-                key={def.id}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('text/plain', def.id);
-                  e.dataTransfer.effectAllowed = 'copy';
-                  handleDragStart(def.id);
-                }}
-                onDragEnd={handleDragEnd}
-                onClick={() => handleAddNodeClick(def.id)}
-                className={`p-3 rounded cursor-move transition ${
-                  draggedNodeDef === def.id
-                    ? 'bg-blue-500 opacity-50'
-                    : 'bg-slate-800 hover:bg-slate-700'
-                } border border-slate-600 hover:border-blue-500`}
-              >
-                <div className="text-white text-sm font-semibold">{def.name}</div>
-                <div className="text-slate-400 text-xs mt-1">{def.description}</div>
-                <div className="text-slate-500 text-xs mt-2">
-                  📥 {def.inputs.length} entrada{def.inputs.length !== 1 ? 's' : ''} | 📤{' '}
-                  {def.outputs.length} salida{def.outputs.length !== 1 ? 's' : ''}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4">
+          <h3 className="mb-3 text-sm font-bold text-white">Componentes</h3>
+          <div className="space-y-2">
+            {nodeDefinitions.map((def) => {
+              return (
+                <div
+                  key={def.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', def.id);
+                    e.dataTransfer.effectAllowed = 'copy';
+                    handleDragStart(def.id);
+                  }}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleAddNodeClick(def.id)}
+                  className={`p-3 rounded cursor-move transition ${
+                    draggedNodeDef === def.id
+                      ? 'bg-blue-500 opacity-50'
+                      : 'bg-slate-800 hover:bg-slate-700'
+                  } border border-slate-600 hover:border-blue-500`}
+                >
+                  <div className="text-white text-sm font-semibold">{def.name}</div>
+                  <div className="text-slate-400 text-xs mt-1">{def.description}</div>
+                  <div className="text-slate-500 text-xs mt-2">
+                    📥 {def.inputs.length} entrada{def.inputs.length !== 1 ? 's' : ''} | 📤{' '}
+                    {def.outputs.length} salida{def.outputs.length !== 1 ? 's' : ''}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
+        <OptimizationPanel userId={userId} runPython={runPython} />
       </div>
 
       {/* Info footer */}

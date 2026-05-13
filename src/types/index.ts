@@ -83,6 +83,30 @@ export interface NodeInstance {
   customType?: string;
 }
 
+export interface OptimizationParameterChange {
+  nodeId: string;
+  paramName: string;
+  value: string | number | boolean;
+}
+
+export type OptimizationMode =
+  | 'max-throughput'
+  | 'min-cycle-time'
+  | 'balance-utilization'
+  | 'custom-script';
+
+export interface OptimizationResult {
+  objective: OptimizationMode;
+  objectiveLabel: string;
+  objectiveValue: number;
+  unit?: string;
+  message?: string;
+  bottleneckNodeIds?: string[];
+  affectedNodeIds: string[];
+  suggestedChanges: OptimizationParameterChange[];
+  details?: Record<string, JsonValue>;
+}
+
 // Connection between nodes
 export interface Connection {
   id: string;
@@ -115,6 +139,7 @@ export interface UIState {
   panX: number;
   panY: number;
   draggedNodeDefId: string | null;
+  optimizedNodeIds: string[];
 }
 
 export interface DiagramRecord {

@@ -1,40 +1,49 @@
 'use client';
 
 import { create } from 'zustand';
-import { CanvasState, NodeDefinition, NodeInstance, UIState } from '@/types';
+import {
+  CanvasState,
+  NodeInstance,
+  UIState,
+  NodeDefinition,
+  OptimizationParameterChange,
+} from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { getAllNodeDefinitions as getDefaultNodeDefinitions } from '../nodes';
+import { getNodeDefinition } from '../nodes';
+
+type NodeConfig = NodeInstance['config'];
+type NodeExecutionResult = {
+  output?: NodeInstance['output'];
+  outputByConnector?: NonNullable<NodeInstance['outputByConnector']>;
+};
 
 interface CanvasStore {
   // Canvas state
   canvas: CanvasState;
-  nodeDefinitions: NodeDefinition[];
-
+  
   // UI state
   ui: UIState;
+  
+  // Node definitions (library)
+  nodeDefinitions: NodeDefinition[];
 
   // Canvas actions
   setCanvasName: (name: string) => void;
   setCanvasDescription: (description: string) => void;
   
+  // Node library actions
+  setNodeDefinitions: (definitions: NodeDefinition[]) => void;
+  setDraggedNodeDef: (definitionId: string | null) => void;
+  
   // Node actions
   addNode: (definitionId: string, x: number, y: number) => string;
   removeNode: (nodeId: string) => void;
-  updateNodeName: (nodeId: string, name: string) => void;
   updateNodePosition: (nodeId: string, x: number, y: number) => void;
-  updateNodeConfig: (nodeId: string, config: Record<string, string | number | boolean>) => void;
-  updateNodeScriptOverride: (nodeId: string, scriptOverride: string | undefined) => void;
-  updateNodeExecutionResult: (
-    nodeId: string,
-    payload: {
-      output: unknown;
-      outputByConnector?: Record<string, unknown>;
-      error?: string | null;
-    }
-  ) => void;
-  clearSimulationResults: () => void;
+  updateNodeName: (nodeId: string, name: string) => void;
+  updateNodeConfig: (nodeId: string, config: NodeConfig) => void;
   updateNodeResourceUtilization: (nodeId: string, utilization: number) => void;
   updateNodeCustomType: (nodeId: string, customType: string) => void;
+  applyNodeParameterChanges: (changes: OptimizationParameterChange[]) => void;
   
   // Connection actions
   addConnection: (
@@ -52,15 +61,15 @@ interface CanvasStore {
   setDragOffset: (x: number, y: number) => void;
   setZoom: (zoom: number) => void;
   setPan: (x: number, y: number) => void;
-  setDraggedNodeDef: (definitionId: string | null) => void;
-
-  // Node definition actions
-  setNodeDefinitions: (definitions: NodeDefinition[]) => void;
-  getNodeDefinition: (definitionId: string) => NodeDefinition | undefined;
-
+  setOptimizedNodeIds: (nodeIds: string[]) => void;
+  
   // Canvas operations
   clearCanvas: () => void;
   loadCanvas: (canvas: CanvasState) => void;
+  
+  // Simulation actions
+  updateNodeExecutionResult: (nodeId: string, result: NodeExecutionResult) => void;
+  clearSimulationResults: () => void;
 }
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -73,8 +82,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     updatedAt: Date.now(),
   },
 
-  nodeDefinitions: getDefaultNodeDefinitions(),
-
   ui: {
     selectedNodeId: null,
     selectedConnectionId: null,
@@ -84,7 +91,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     panX: 0,
     panY: 0,
     draggedNodeDefId: null,
+    optimizedNodeIds: [],
   },
+
+  nodeDefinitions: [],
 
   setCanvasName: (name: string) =>
     set((state) => ({
@@ -96,9 +106,21 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       canvas: { ...state.canvas, description, updatedAt: Date.now() },
     })),
 
+  setNodeDefinitions: (definitions: NodeDefinition[]) =>
+    set({
+      nodeDefinitions: definitions,
+    }),
+
+  setDraggedNodeDef: (definitionId: string | null) =>
+    set((state) => ({
+      ui: { ...state.ui, draggedNodeDefId: definitionId },
+    })),
+
   addNode: (definitionId: string, x: number, y: number) => {
     const nodeId = uuidv4();
-    const definition = get().nodeDefinitions.find((node) => node.id === definitionId);
+    const definition =
+      get().nodeDefinitions.find((nodeDefinition) => nodeDefinition.id === definitionId) ??
+      getNodeDefinition(definitionId);
     
     if (!definition) {
       console.error(`Node definition not found: ${definitionId}`);
@@ -106,7 +128,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }
 
     // Create default config from definition
-    const config: Record<string, string | number | boolean> = {};
+    const config: NodeConfig = {};
     definition.configProperties.forEach((prop) => {
       config[prop.name] = prop.defaultValue;
     });
@@ -114,15 +136,10 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const newNode: NodeInstance = {
       id: nodeId,
       definitionId,
-      name: definition.name,
       x,
       y,
       config,
       connectorValues: {},
-      scriptOverride: undefined,
-      output: null,
-      outputByConnector: {},
-      lastError: null,
     };
 
     set((state) => ({
@@ -148,17 +165,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       },
     })),
 
-  updateNodeName: (nodeId: string, name: string) =>
-    set((state) => ({
-      canvas: {
-        ...state.canvas,
-        nodes: state.canvas.nodes.map((n) =>
-          n.id === nodeId ? { ...n, name } : n
-        ),
-        updatedAt: Date.now(),
-      },
-    })),
-
   updateNodePosition: (nodeId: string, x: number, y: number) =>
     set((state) => ({
       canvas: {
@@ -170,7 +176,16 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       },
     })),
 
-  updateNodeConfig: (nodeId: string, config: Record<string, string | number | boolean>) =>
+  updateNodeName: (nodeId: string, name: string) =>
+    set((state) => ({
+      canvas: {
+        ...state.canvas,
+        nodes: state.canvas.nodes.map((n) => (n.id === nodeId ? { ...n, name } : n)),
+        updatedAt: Date.now(),
+      },
+    })),
+
+  updateNodeConfig: (nodeId: string, config: NodeConfig) =>
     set((state) => ({
       canvas: {
         ...state.canvas,
@@ -181,58 +196,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       },
     })),
 
-  updateNodeScriptOverride: (nodeId: string, scriptOverride: string | undefined) =>
-    set((state) => ({
-      canvas: {
-        ...state.canvas,
-        nodes: state.canvas.nodes.map((n) =>
-          n.id === nodeId ? { ...n, scriptOverride, lastError: null } : n
-        ),
-        updatedAt: Date.now(),
-      },
-    })),
-
-  updateNodeExecutionResult: (nodeId: string, payload) =>
-    set((state) => ({
-      canvas: {
-        ...state.canvas,
-        nodes: state.canvas.nodes.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                output: payload.output as NodeInstance['output'],
-                outputByConnector:
-                  (payload.outputByConnector as NodeInstance['outputByConnector']) ?? {},
-                lastError: payload.error ?? null,
-                lastRunAt: Date.now(),
-              }
-            : n
-        ),
-        updatedAt: Date.now(),
-      },
-    })),
-
-  clearSimulationResults: () =>
-    set((state) => ({
-      canvas: {
-        ...state.canvas,
-        nodes: state.canvas.nodes.map((n) => ({
-          ...n,
-          output: null,
-          outputByConnector: {},
-          lastError: null,
-          lastRunAt: undefined,
-        })),
-        updatedAt: Date.now(),
-      },
-    })),
-
   updateNodeResourceUtilization: (nodeId: string, utilization: number) =>
     set((state) => ({
       canvas: {
         ...state.canvas,
         nodes: state.canvas.nodes.map((n) =>
-          n.id === nodeId ? { ...n, resourceUtilization: Math.max(0, Math.min(100, utilization)) } : n
+          n.id === nodeId ? { ...n, resourceUtilization: utilization } : n
         ),
         updatedAt: Date.now(),
       },
@@ -242,12 +211,47 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set((state) => ({
       canvas: {
         ...state.canvas,
-        nodes: state.canvas.nodes.map((n) =>
-          n.id === nodeId ? { ...n, customType } : n
-        ),
+        nodes: state.canvas.nodes.map((n) => (n.id === nodeId ? { ...n, customType } : n)),
         updatedAt: Date.now(),
       },
     })),
+
+  applyNodeParameterChanges: (changes: OptimizationParameterChange[]) =>
+    set((state) => {
+      if (changes.length === 0) {
+        return state;
+      }
+
+      const changesByNodeId = new Map<string, OptimizationParameterChange[]>();
+      for (const change of changes) {
+        const existing = changesByNodeId.get(change.nodeId) ?? [];
+        existing.push(change);
+        changesByNodeId.set(change.nodeId, existing);
+      }
+
+      return {
+        canvas: {
+          ...state.canvas,
+          nodes: state.canvas.nodes.map((node) => {
+            const nodeChanges = changesByNodeId.get(node.id);
+            if (!nodeChanges) {
+              return node;
+            }
+
+            const nextConfig = { ...node.config };
+            for (const change of nodeChanges) {
+              nextConfig[change.paramName] = change.value;
+            }
+
+            return {
+              ...node,
+              config: nextConfig,
+            };
+          }),
+          updatedAt: Date.now(),
+        },
+      };
+    }),
 
   addConnection: (
     sourceNodeId: string,
@@ -264,12 +268,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     
     if (!sourceNode || !targetNode) {
       console.error('Invalid nodes for connection');
-      return null;
-    }
-
-    // Prevent self-connections
-    if (sourceNodeId === targetNodeId) {
-      console.warn('Cannot connect a node to itself');
       return null;
     }
 
@@ -346,26 +344,13 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       ui: { ...state.ui, panX: x, panY: y },
     })),
 
-  setDraggedNodeDef: (definitionId: string | null) =>
+  setOptimizedNodeIds: (nodeIds: string[]) =>
     set((state) => ({
-      ui: { ...state.ui, draggedNodeDefId: definitionId },
+      ui: { ...state.ui, optimizedNodeIds: nodeIds },
     })),
-
-  setNodeDefinitions: (definitions: NodeDefinition[]) =>
-    set((state) => ({
-      nodeDefinitions: definitions,
-      canvas: {
-        ...state.canvas,
-        updatedAt: Date.now(),
-      },
-    })),
-
-  getNodeDefinition: (definitionId: string) =>
-    get().nodeDefinitions.find((definition) => definition.id === definitionId),
 
   clearCanvas: () =>
     set((state) => ({
-      ...state,
       canvas: {
         id: uuidv4(),
         name: 'Nuevo Proyecto',
@@ -374,12 +359,17 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         createdAt: Date.now(),
         updatedAt: Date.now(),
       },
+      ui: {
+        ...state.ui,
+        selectedNodeId: null,
+        selectedConnectionId: null,
+        optimizedNodeIds: [],
+      },
     })),
 
   loadCanvas: (canvas: CanvasState) =>
     set({
       canvas,
-      nodeDefinitions: get().nodeDefinitions,
       ui: {
         selectedNodeId: null,
         selectedConnectionId: null,
@@ -389,6 +379,39 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         panX: 0,
         panY: 0,
         draggedNodeDefId: null,
+        optimizedNodeIds: [],
       },
     }),
+
+  updateNodeExecutionResult: (nodeId: string, result: NodeExecutionResult) =>
+    set((state) => ({
+      canvas: {
+        ...state.canvas,
+        nodes: state.canvas.nodes.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                output: result.output,
+                outputByConnector: result.outputByConnector,
+                lastRunAt: Date.now(),
+              }
+            : n
+        ),
+        updatedAt: Date.now(),
+      },
+    })),
+
+  clearSimulationResults: () =>
+    set((state) => ({
+      canvas: {
+        ...state.canvas,
+        nodes: state.canvas.nodes.map((n) => ({
+          ...n,
+          output: undefined,
+          outputByConnector: undefined,
+          lastError: null,
+        })),
+        updatedAt: Date.now(),
+      },
+    })),
 }));

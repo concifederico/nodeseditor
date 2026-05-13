@@ -41,8 +41,8 @@ export function createConfigProperty(index = 0): ConfigPropertyDefinition {
   return {
     name: `propiedad_${index + 1}`,
     label: `Propiedad ${index + 1}`,
-    type: 'string',
-    defaultValue: '',
+    type: 'number',
+    defaultValue: 0,
     unit: '',
     options: [],
   };
@@ -57,7 +57,8 @@ export function createBlankNodeDefinition(): NodeDefinition {
     inputs: [createConnector('input', 0)],
     outputs: [createConnector('output', 0)],
     configProperties: [],
-    defaultScript: 'result = inputs\n',
+    defaultScript:
+      '# Usa nombres directos: propiedades de config y entradas por conector\noutput_1 = input_1 if "input_1" in locals() else 0\n',
     width: 140,
     height: 100,
   };
@@ -88,9 +89,18 @@ export function normalizeNodeDefinition(definition: NodeDefinition): NodeDefinit
     normalizeConnector(connector, 'output', index)
   );
 
+  // Preserve existing ID if valid, only generate new one if missing
+  let finalId = definition.id;
+  if (!finalId || finalId.trim() === '') {
+    finalId = slugifyNodePart(definition.name, `custom_${Date.now()}`);
+  } else {
+    // Keep the existing ID as-is, just ensure it's properly slugified
+    finalId = slugifyNodePart(finalId, finalId);
+  }
+
   return {
     ...definition,
-    id: slugifyNodePart(definition.id || definition.name, `custom_${Date.now()}`),
+    id: finalId,
     name: definition.name.trim() || 'Nodo sin nombre',
     category: definition.category.trim() || 'custom',
     description: definition.description.trim(),

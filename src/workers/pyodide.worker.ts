@@ -47,15 +47,69 @@ async function runScript(
   inputs: Record<string, unknown>,
   config: Record<string, unknown> = {}
 ) {
+  const pyodidePackages = Array.isArray(config.__pyodidePackages__)
+    ? config.__pyodidePackages__.filter((value): value is string => typeof value === 'string')
+    : [];
+  const micropipPackages = Array.isArray(config.__micropipPackages__)
+    ? config.__micropipPackages__.filter((value): value is string => typeof value === 'string')
+    : [];
+  const outputNames = Array.isArray(config.__outputNames__)
+    ? config.__outputNames__.filter((value): value is string => typeof value === 'string')
+    : [];
+
   await instance.loadPackagesFromImports(script);
+  if (pyodidePackages.length > 0) {
+    await instance.loadPackage(pyodidePackages);
+  }
+  if (micropipPackages.length > 0) {
+    await instance.loadPackage(['micropip']);
+    const pyMicropipPackages = instance.toPy(micropipPackages);
+    instance.globals.set('__micropip_packages__', pyMicropipPackages);
+    try {
+      await instance.runPythonAsync(`
+import micropip
+await micropip.install(list(__micropip_packages__))
+`);
+    } finally {
+      pyMicropipPackages.destroy?.();
+      instance.globals.delete('__micropip_packages__');
+    }
+  }
 
   const globals = instance.globals;
+  
+  // Convert config string values that look like numbers to actual numbers
+  const normalizedConfig: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(config)) {
+    if (
+      key === '__pyodidePackages__' ||
+      key === '__micropipPackages__' ||
+      key === '__outputNames__'
+    ) {
+      continue;
+    }
+    if (typeof value === 'string') {
+      // Try to parse as number if it looks numeric
+      if (/^-?\d+\.?\d*$/.test(value.trim())) {
+        normalizedConfig[key] = Number(value);
+      } else if (value === 'true' || value === 'false') {
+        normalizedConfig[key] = value === 'true';
+      } else {
+        normalizedConfig[key] = value;
+      }
+    } else {
+      normalizedConfig[key] = value;
+    }
+  }
+  
   const pyInputs = instance.toPy(inputs);
-  const pyConfig = instance.toPy(config);
+  const pyConfig = instance.toPy(normalizedConfig);
+  const pyOutputNames = instance.toPy(outputNames);
 
   globals.set('__node_inputs__', pyInputs);
   globals.set('__node_config__', pyConfig);
   globals.set('__node_script__', script);
+  globals.set('__node_output_names__', pyOutputNames);
 
   try {
     const result = await instance.runPythonAsync(`
@@ -64,8 +118,21 @@ locals_ns = {}
 
 # Agregar inputs como variables individuales
 if isinstance(__node_inputs__, dict):
+    single_input_key = None
+    if len(__node_inputs__) == 1:
+        single_input_key = next(iter(__node_inputs__.keys()))
+
     for key, value in __node_inputs__.items():
         locals_ns[key] = value
+
+        # Exponer propiedades internas con nombres directos cuando la entrada es un dict.
+        if isinstance(value, dict):
+            for nested_key, nested_value in value.items():
+                locals_ns[f"{key}_{nested_key}"] = nested_value
+
+                # Si solo hay una entrada y no existe colisión, exponer tambien el nombre corto.
+                if single_input_key == key and nested_key not in locals_ns:
+                    locals_ns[nested_key] = nested_value
 
 # Agregar config como variables individuales
 if isinstance(__node_config__, dict):
@@ -77,7 +144,7 @@ locals_ns["inputs"] = __node_inputs__
 locals_ns["config"] = __node_config__
 
 # Ejecutar el script del usuario
-exec(__node_script__, {}, locals_ns)
+exec(__node_script__, locals_ns, locals_ns)
 
 # Determinar qué retornar
 if "main" in locals_ns and callable(locals_ns["main"]):
@@ -96,11 +163,19 @@ else:
         if key not in system_vars and not key.startswith("_") and not callable(value):
             user_variables[key] = value
     
-    if user_variables:
+    preferred_outputs = {}
+    if isinstance(__node_output_names__, list) and len(__node_output_names__) > 0:
+        for output_name in __node_output_names__:
+            if output_name in user_variables:
+                preferred_outputs[output_name] = user_variables[output_name]
+
+    if preferred_outputs:
+        __node_result__ = {"outputs": preferred_outputs}
+    elif user_variables:
         # Si hay variables definidas, devolverlas como outputs
         __node_result__ = {"outputs": user_variables}
     else:
-        raise ValueError("El script debe definir 'result', una función main(inputs, config), o al menos una variable de salida.")
+        raise ValueError("El script debe definir variables con el nombre de las salidas, o bien 'result', o una función main(inputs, config).")
 
 __node_result__
 `);
@@ -109,9 +184,11 @@ __node_result__
   } finally {
     pyInputs.destroy?.();
     pyConfig.destroy?.();
+    pyOutputNames.destroy?.();
     globals.delete('__node_inputs__');
     globals.delete('__node_config__');
     globals.delete('__node_script__');
+    globals.delete('__node_output_names__');
   }
 }
 

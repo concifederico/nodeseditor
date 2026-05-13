@@ -26,15 +26,15 @@
    - Desde otros nodos al **mismo destino** ✅
    - Crea redes complejas sin límite ✅
 
-### 4️⃣ Usar % Utilización
+### 4️⃣ % Utilización de Recurso (Calculado)
 1. Selecciona un nodo
 2. En panel derecho → "% Utilización de Recurso"
-3. **Arrastra el slider** o **escribe un valor** (0-100)
-4. La barra dentro del nodo cambia de color:
+3. **Este valor es calculado automáticamente por el script Python**
+4. La barra dentro del nodo cambia de color según el valor:
    - 🟢 **Verde** (0-50%): Normal
    - 🟡 **Amarillo** (50-80%): Precaución
    - 🔴 **Rojo** (80-100%): Crítico
-5. El valor se **guarda automáticamente**
+5. Para cambiar la utilización, modifica el script Python del bloque
 
 ### 5️⃣ Tipo Personalizado
 1. Selecciona un nodo

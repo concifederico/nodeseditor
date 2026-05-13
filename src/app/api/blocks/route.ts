@@ -110,3 +110,51 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  const authResult = await requireAdmin();
+
+  if ('error' in authResult) {
+    return authResult.error;
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const blockSlug = searchParams.get('id');
+
+    if (!blockSlug) {
+      return NextResponse.json(
+        { error: 'El ID del bloque es requerido.' },
+        { status: 400 }
+      );
+    }
+
+    const block = await prisma.block.findUnique({ where: { slug: blockSlug } });
+
+    if (!block) {
+      return NextResponse.json(
+        { error: 'El bloque no fue encontrado.' },
+        { status: 404 }
+      );
+    }
+
+    await prisma.block.delete({ where: { slug: blockSlug } });
+
+    await prisma.userActivity.create({
+      data: {
+        userId: authResult.session.user.id,
+        type: 'block_deleted',
+        metadata: { blockId: block.id, slug: block.slug },
+      },
+    });
+
+    const definitions = await listNodeDefinitions();
+    return NextResponse.json(definitions);
+  } catch (error) {
+    console.error('DELETE /api/blocks error:', error);
+    return NextResponse.json(
+      { error: 'No se pudo eliminar el bloque.' },
+      { status: 500 }
+    );
+  }
+}

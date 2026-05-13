@@ -7,6 +7,7 @@ interface NodeProps {
   node: NodeInstance;
   definition: NodeDefinition;
   isSelected: boolean;
+  isOptimized?: boolean;
   onSelect: () => void;
   onDelete: () => void;
   onMouseDown: (e: React.MouseEvent) => void;
@@ -18,6 +19,7 @@ export default function Node({
   node,
   definition,
   isSelected,
+  isOptimized = false,
   onSelect,
   onDelete,
   onMouseDown,
@@ -56,10 +58,26 @@ export default function Node({
         height={height}
         rx="8"
         fill={isSelected ? '#3b82f6' : '#1e293b'}
-        stroke={isSelected ? '#60a5fa' : '#475569'}
-        strokeWidth="2"
+        stroke={isSelected ? '#60a5fa' : isOptimized ? '#f59e0b' : '#475569'}
+        strokeWidth={isOptimized ? '3' : '2'}
         style={{ pointerEvents: 'auto' }}
       />
+
+      {isOptimized && (
+        <rect
+          x="-3"
+          y="-3"
+          width={width + 6}
+          height={height + 6}
+          rx="11"
+          fill="none"
+          stroke="#fbbf24"
+          strokeWidth="1.5"
+          strokeDasharray="6,4"
+          opacity="0.9"
+          pointerEvents="none"
+        />
+      )}
 
       {/* Delete button */}
       {isSelected && (

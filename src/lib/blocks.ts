@@ -11,13 +11,23 @@ import {
 function defaultScriptForBlock(definition: NodeDefinition) {
   const firstOutput = definition.outputs[0]?.id ?? 'output';
   const firstInput = definition.inputs[0]?.id;
+  const firstInputProperty = definition.inputs[0]?.properties[0]?.name;
+  const firstConfig = definition.configProperties[0]?.name;
+  const directValue =
+    firstInputProperty
+      ? firstInput
+        ? `${firstInput}_${firstInputProperty}`
+        : firstInputProperty
+      : firstInput ?? firstConfig ?? 'config';
 
   return [
-    '# inputs contiene los valores recibidos por conector.',
-    '# config contiene las propiedades configuradas del nodo.',
+    '# Variables disponibles:',
+    '# - cada propiedad de configuracion por su nombre',
+    '# - cada entrada por nombre de conector',
+    '# - si la entrada es un dict, tambien puedes usar conector_propiedad',
     firstInput
-      ? `result = inputs.get("${firstInput}") or {"connector": "${firstOutput}", "value": config}`
-      : `result = {"connector": "${firstOutput}", "value": config}`,
+      ? `${firstOutput} = ${directValue}`
+      : `${firstOutput} = ${firstConfig ?? '0'}`,
     '',
   ].join('\n');
 }

@@ -8,7 +8,6 @@ import PropertiesPanel from '@/components/Properties/PropertiesPanel';
 import NodeLibraryEditor from '@/components/Toolbar/NodeLibraryEditor';
 import Toolbar from '@/components/Toolbar/Toolbar';
 import { usePyodide } from '@/hooks/usePyodide';
-import { executeGraphSequentially } from '@/lib/simulation/executeGraph';
 import { useCanvasStore } from '@/lib/store/canvasStore';
 import { CanvasState, DiagramRecord, NodeDefinition } from '@/types';
 
@@ -36,19 +35,14 @@ function diagramRecordToCanvasState(record: DiagramRecord, userId: string): Canv
 
 export default function EditorApp({ user }: EditorAppProps) {
   const [activeView, setActiveView] = useState<'canvas' | 'library'>('canvas');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSavingDefinitions, setIsSavingDefinitions] = useState(false);
-  const [isRunningSimulation, setIsRunningSimulation] = useState(false);
   const [deletingCanvasId, setDeletingCanvasId] = useState<string | null>(null);
   const [savedDiagrams, setSavedDiagrams] = useState<DiagramRecord[]>([]);
   const [isProjectPickerOpen, setIsProjectPickerOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const canvas = useCanvasStore((state) => state.canvas);
-  const nodeDefinitions = useCanvasStore((state) => state.nodeDefinitions);
   const loadCanvas = useCanvasStore((state) => state.loadCanvas);
   const setNodeDefinitions = useCanvasStore((state) => state.setNodeDefinitions);
-  const updateNodeExecutionResult = useCanvasStore((state) => state.updateNodeExecutionResult);
-  const clearSimulationResults = useCanvasStore((state) => state.clearSimulationResults);
   const { runPython } = usePyodide({
     indexURL: process.env.NEXT_PUBLIC_PYODIDE_INDEX_URL,
   });
@@ -81,7 +75,6 @@ export default function EditorApp({ user }: EditorAppProps) {
   }, [setNodeDefinitions]);
 
   const handleSave = async () => {
-    setIsLoading(true);
     try {
       const response = await fetch('/api/diagrams', {
         method: 'POST',
@@ -106,13 +99,11 @@ export default function EditorApp({ user }: EditorAppProps) {
       console.error('Save error:', error);
       setSaveStatus('Error al guardar');
     } finally {
-      setIsLoading(false);
       window.setTimeout(() => setSaveStatus(null), 2500);
     }
   };
 
   const handleLoad = async () => {
-    setIsLoading(true);
     try {
       const response = await fetch('/api/diagrams');
       if (!response.ok) {
@@ -126,8 +117,6 @@ export default function EditorApp({ user }: EditorAppProps) {
       console.error('Load error:', error);
       setSaveStatus('Error al cargar diagramas');
       window.setTimeout(() => setSaveStatus(null), 2500);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -170,65 +159,41 @@ export default function EditorApp({ user }: EditorAppProps) {
 
   const handlePersistDefinitions = async (
     definitions: NodeDefinition[],
-    activeDefinition: NodeDefinition
+    activeDefinition: NodeDefinition,
+    deletedId?: string
   ) => {
     setIsSavingDefinitions(true);
     try {
-      const response = await fetch('/api/blocks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(activeDefinition),
-      });
+      let response: Response;
+
+      if (deletedId) {
+        // Handle deletion
+        response = await fetch(`/api/blocks?id=${encodeURIComponent(deletedId)}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } else {
+        // Handle creation/update
+        response = await fetch('/api/blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(activeDefinition),
+        });
+      }
 
       if (!response.ok) {
-        throw new Error('Failed to save blocks');
+        throw new Error(deletedId ? 'Failed to delete block' : 'Failed to save blocks');
       }
 
       const savedDefinitions: NodeDefinition[] = await response.json();
       setNodeDefinitions(savedDefinitions);
-      setSaveStatus('Biblioteca guardada');
+      setSaveStatus(deletedId ? 'Nodo eliminado' : 'Biblioteca guardada');
     } catch (error) {
-      console.error('Blocks save error:', error);
-      setSaveStatus('Error al guardar biblioteca');
+      console.error('Blocks operation error:', error);
+      setSaveStatus('Error al procesar biblioteca');
     } finally {
       setIsSavingDefinitions(false);
       window.setTimeout(() => setSaveStatus(null), 2500);
-    }
-  };
-
-  const handleRunSimulation = async () => {
-    setIsRunningSimulation(true);
-    clearSimulationResults();
-    const startedAt = performance.now();
-
-    try {
-      await executeGraphSequentially({
-        nodes: canvas.nodes,
-        connections: canvas.connections,
-        definitions: nodeDefinitions,
-        runPythonScript: runPython,
-        onNodeComplete: (result) => {
-          updateNodeExecutionResult(result.nodeId, {
-            output: result.output,
-            outputByConnector: result.outputByConnector,
-          });
-        },
-      });
-
-      const durationMs = Math.round(performance.now() - startedAt);
-      void fetch('/api/activity/simulation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ durationMs, nodeCount: canvas.nodes.length }),
-      });
-      setSaveStatus('Simulación completada');
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'La simulación falló por un error desconocido.';
-      setSaveStatus(message);
-    } finally {
-      setIsRunningSimulation(false);
-      window.setTimeout(() => setSaveStatus(null), 3500);
     }
   };
 
@@ -243,8 +208,8 @@ export default function EditorApp({ user }: EditorAppProps) {
         <Toolbar
           onSave={handleSave}
           onLoad={handleLoad}
-          onRun={handleRunSimulation}
-          isRunning={isRunningSimulation || isLoading}
+          userId={user.id}
+          runPython={runPython}
         />
       </div>
 

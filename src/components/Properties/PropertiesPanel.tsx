@@ -1,46 +1,55 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
+import { NodeDefinition, NodeInstance } from '@/types';
 
-export default function PropertiesPanel() {
-  const canvas = useCanvasStore((state) => state.canvas);
-  const nodeDefinitions = useCanvasStore((state) => state.nodeDefinitions);
-  const ui = useCanvasStore((state) => state.ui);
-  const updateNodeName = useCanvasStore((state) => state.updateNodeName);
-  const updateNodeConfig = useCanvasStore((state) => state.updateNodeConfig);
-  const updateNodeResourceUtilization = useCanvasStore((state) => state.updateNodeResourceUtilization);
-  const updateNodeCustomType = useCanvasStore((state) => state.updateNodeCustomType);
+function SelectedNodeProperties({
+  selectedNode,
+  definition,
+  updateNodeName,
+  updateNodeConfig,
+  updateNodeCustomType,
+}: {
+  selectedNode: NodeInstance;
+  definition: NodeDefinition;
+  updateNodeName: (nodeId: string, name: string) => void;
+  updateNodeConfig: (nodeId: string, config: Record<string, string | number | boolean>) => void;
+  updateNodeCustomType: (nodeId: string, customType: string) => void;
+}) {
+  const [draftName, setDraftName] = useState(selectedNode.name ?? '');
+  const [draftCustomType, setDraftCustomType] = useState(selectedNode.customType ?? '');
+  const [draftConfig, setDraftConfig] = useState<Record<string, string | number | boolean>>(
+    selectedNode.config
+  );
+  const syncTimeoutRef = useRef<number | null>(null);
 
-  const selectedNode = canvas.nodes.find((n) => n.id === ui.selectedNodeId);
-
-  if (!selectedNode) {
-    return (
-      <div className="w-full h-full bg-slate-900 border-l border-slate-700 p-4 flex items-center justify-center">
-        <div className="text-center text-slate-400">
-          <p className="text-sm">Selecciona un nodo para ver sus propiedades</p>
-        </div>
-      </div>
-    );
-  }
-
-  const definition = nodeDefinitions.find((node) => node.id === selectedNode.definitionId);
-
-  if (!definition) {
-    return (
-      <div className="w-full h-full bg-slate-900 border-l border-slate-700 p-4">
-        <p className="text-red-400 text-sm">Error: Definición de nodo no encontrada</p>
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current !== null) {
+        window.clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleConfigChange = (propName: string, value: string | number | boolean) => {
-    updateNodeConfig(selectedNode.id, { [propName]: value });
+    setDraftConfig((current) => ({
+      ...current,
+      [propName]: value,
+    }));
+
+    if (syncTimeoutRef.current !== null) {
+      window.clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = window.setTimeout(() => {
+      updateNodeConfig(selectedNode.id, { [propName]: value });
+    }, 200);
   };
 
   const resourceUtilization = selectedNode.resourceUtilization ?? 0;
-  const customType = selectedNode.customType ?? '';
-  const nodeName = selectedNode.name ?? definition.name;
+  const customType = draftCustomType;
+  const nodeName = draftName || definition.name;
 
   return (
     <div className="w-full h-full bg-slate-900 border-l border-slate-700 flex flex-col overflow-hidden">
@@ -92,42 +101,26 @@ export default function PropertiesPanel() {
               <label className="text-slate-300 text-xs block mb-1">Nombre del nodo</label>
               <input
                 type="text"
-                value={nodeName}
-                onChange={(e) => updateNodeName(selectedNode.id, e.target.value)}
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onBlur={(e) => updateNodeName(selectedNode.id, e.target.value)}
                 className="w-full px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 focus:outline-none focus:border-blue-500"
                 placeholder="Nombre visible del nodo"
               />
             </div>
 
-            {/* Resource Utilization */}
+            {/* Resource Utilization - Calculated from Python script */}
             <div>
               <label className="text-slate-300 text-xs block mb-1">
                 % Utilización de Recurso: <span className="text-blue-300 font-semibold">{resourceUtilization}%</span>
               </label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={resourceUtilization}
-                  onChange={(e) =>
-                    updateNodeResourceUtilization(selectedNode.id, parseFloat(e.target.value))
-                  }
-                  className="flex-1 h-2 bg-slate-700 rounded appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={resourceUtilization}
-                  onChange={(e) =>
-                    updateNodeResourceUtilization(selectedNode.id, parseFloat(e.target.value))
-                  }
-                  className="w-12 px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 focus:outline-none focus:border-blue-500"
-                />
+              <div className="text-slate-400 text-xs mb-2">
+                {resourceUtilization > 0
+                  ? `Resultado de simulación: ${resourceUtilization}%`
+                  : 'Calculado desde el script Python (asignar variable "utilization")'}
               </div>
-              {/* Resource utilization bar */}
-              <div className="mt-2 h-2 bg-slate-700 rounded overflow-hidden">
+              {/* Resource utilization bar - display only */}
+              <div className="h-2 bg-slate-700 rounded overflow-hidden">
                 <div
                   className={`h-full transition-all ${
                     resourceUtilization < 50
@@ -147,9 +140,8 @@ export default function PropertiesPanel() {
               <input
                 type="text"
                 value={customType}
-                onChange={(e) =>
-                  updateNodeCustomType(selectedNode.id, e.target.value)
-                }
+                onChange={(e) => setDraftCustomType(e.target.value)}
+                onBlur={(e) => updateNodeCustomType(selectedNode.id, e.target.value)}
                 className="w-full px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 focus:outline-none focus:border-blue-500"
                 placeholder="ej: Fuente, Sumidero, Transformador..."
               />
@@ -172,7 +164,7 @@ export default function PropertiesPanel() {
                   {prop.type === 'number' && (
                     <input
                       type="number"
-                      value={Number(selectedNode.config[prop.name] ?? prop.defaultValue)}
+                      value={Number(draftConfig[prop.name] ?? prop.defaultValue)}
                       onChange={(e) =>
                         handleConfigChange(prop.name, parseFloat(e.target.value))
                       }
@@ -183,7 +175,7 @@ export default function PropertiesPanel() {
                   {prop.type === 'string' && (
                     <input
                       type="text"
-                      value={String(selectedNode.config[prop.name] ?? prop.defaultValue)}
+                      value={String(draftConfig[prop.name] ?? prop.defaultValue)}
                       onChange={(e) =>
                         handleConfigChange(prop.name, e.target.value)
                       }
@@ -193,7 +185,7 @@ export default function PropertiesPanel() {
 
                   {prop.type === 'select' && prop.options && (
                     <select
-                      value={String(selectedNode.config[prop.name] ?? prop.defaultValue)}
+                      value={String(draftConfig[prop.name] ?? prop.defaultValue)}
                       onChange={(e) =>
                         handleConfigChange(prop.name, e.target.value)
                       }
@@ -209,7 +201,7 @@ export default function PropertiesPanel() {
 
                   {prop.type === 'boolean' && (
                     <select
-                      value={`${selectedNode.config[prop.name] ?? prop.defaultValue}`}
+                      value={`${draftConfig[prop.name] ?? prop.defaultValue}`}
                       onChange={(e) =>
                         handleConfigChange(prop.name, e.target.value === 'true')
                       }
@@ -270,5 +262,47 @@ export default function PropertiesPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PropertiesPanel() {
+  const canvas = useCanvasStore((state) => state.canvas);
+  const nodeDefinitions = useCanvasStore((state) => state.nodeDefinitions);
+  const ui = useCanvasStore((state) => state.ui);
+  const updateNodeName = useCanvasStore((state) => state.updateNodeName);
+  const updateNodeConfig = useCanvasStore((state) => state.updateNodeConfig);
+  const updateNodeCustomType = useCanvasStore((state) => state.updateNodeCustomType);
+
+  const selectedNode = canvas.nodes.find((n) => n.id === ui.selectedNodeId);
+
+  if (!selectedNode) {
+    return (
+      <div className="w-full h-full bg-slate-900 border-l border-slate-700 p-4 flex items-center justify-center">
+        <div className="text-center text-slate-400">
+          <p className="text-sm">Selecciona un nodo para ver sus propiedades</p>
+        </div>
+      </div>
+    );
+  }
+
+  const definition = nodeDefinitions.find((node) => node.id === selectedNode.definitionId);
+
+  if (!definition) {
+    return (
+      <div className="w-full h-full bg-slate-900 border-l border-slate-700 p-4">
+        <p className="text-red-400 text-sm">Error: Definición de nodo no encontrada</p>
+      </div>
+    );
+  }
+
+  return (
+    <SelectedNodeProperties
+      key={selectedNode.id}
+      selectedNode={selectedNode}
+      definition={definition}
+      updateNodeName={updateNodeName}
+      updateNodeConfig={updateNodeConfig}
+      updateNodeCustomType={updateNodeCustomType}
+    />
   );
 }

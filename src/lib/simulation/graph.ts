@@ -1,4 +1,4 @@
-import { Connection, NodeDefinition, NodeInstance } from '@/types';
+import { Connection, JsonValue, NodeDefinition, NodeInstance } from '@/types';
 
 export interface GraphExecutionOrder {
   orderedNodeIds: string[];
@@ -68,8 +68,8 @@ export function normalizeNodeResult(
   rawOutput: unknown,
   definition?: NodeDefinition
 ): {
-  output: unknown;
-  outputByConnector: Record<string, unknown>;
+  output: JsonValue;
+  outputByConnector: Record<string, JsonValue>;
 } {
   if (
     rawOutput &&
@@ -79,14 +79,14 @@ export function normalizeNodeResult(
     typeof rawOutput.outputs === 'object'
   ) {
     return {
-      output: rawOutput,
-      outputByConnector: rawOutput.outputs as Record<string, unknown>,
+      output: rawOutput as JsonValue,
+      outputByConnector: rawOutput.outputs as Record<string, JsonValue>,
     };
   }
 
   const firstOutputId = definition?.outputs[0]?.id;
   return {
-    output: rawOutput,
-    outputByConnector: firstOutputId ? { [firstOutputId]: rawOutput } : {},
+    output: rawOutput as JsonValue,
+    outputByConnector: firstOutputId ? { [firstOutputId]: rawOutput as JsonValue } : {},
   };
 }
