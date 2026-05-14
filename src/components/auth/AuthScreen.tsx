@@ -91,7 +91,7 @@ export default function AuthScreen({
                 Bloques compartidos y editables por administradores.
               </div>
               <div className="rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4">
-                Scripts Python por nodo con resultados visibles en el canvas.
+                Scripts Python por nodo con resultados visibles en el lienzo.
               </div>
             </div>
           </section>

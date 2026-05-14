@@ -3,7 +3,7 @@
 ## 🚀 Inicio Rápido
 
 ### 1️⃣ Crear Nodos
-- **Arrastra** un componente desde la barra izquierda al canvas
+- **Arrastra** un componente desde la barra izquierda al lienzo
 - El nodo aparecerá en la posición exacta donde lo soltaste
 - **Ahora funciona correctamente con zoom y pan**
 
@@ -51,7 +51,7 @@
 - **Cargar**: Click en botón "Cargar" (izquierda)
 - Se guarda el **proyecto completo** con todos los nodos, conexiones y propiedades
 
-## 🎮 Controles del Canvas
+## 🎮 Controles del Lienzo
 
 | Acción | Control |
 |--------|---------|
@@ -62,7 +62,7 @@
 | **Mover vista** | Click derecho + Arrastrar |
 | **Eliminar nodo** | Seleccionar + Click en ✕ (arriba derecha) |
 | **Eliminar conexión** | Seleccionar + Click en ✕ |
-| **Deseleccionar** | Click en canvas vacío |
+| **Deseleccionar** | Click en lienzo vacío |
 
 ## 🔗 Ejemplo: Sistema de Aire Comprimido
 
@@ -139,7 +139,7 @@ A → B → C                A ┐                          A → {B, C}
 ## 🔮 Características Avanzadas
 
 ### Tipo de Conector
-- Los conectores tienen tipos: `energy`, `air`, `water`, `number`, `string`
+- Los conectores tienen tipos: `energy`, `water`, `number`, `string`
 - Actualmente **no se valida** (próxima versión)
 
 ### Propiedades de Conexión

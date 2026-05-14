@@ -77,7 +77,7 @@ export default function Toolbar({
         <button
           onClick={clearCanvas}
           className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition"
-          title="Limpiar canvas"
+          title="Limpiar lienzo"
         >
           <Trash2 size={16} />
           Limpiar
@@ -122,8 +122,8 @@ export default function Toolbar({
 
       {/* Info footer */}
       <div className="p-4 bg-slate-800 text-slate-400 text-xs border-t border-slate-700">
-        <p className="mb-1">➕ Click para agregar al canvas</p>
-        <p className="mb-1">💡 Arrastre componentes al canvas</p>
+        <p className="mb-1">➕ Click para agregar al lienzo</p>
+        <p className="mb-1">💡 Arrastre componentes al lienzo</p>
         <p className="mb-1">🔗 Arrastra entre conectores para unir</p>
         <p>🗑️ Click en nodo para seleccionar/eliminar</p>
       </div>

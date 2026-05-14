@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Node Simulator",
+  title: "Factory Flow",
   description: "Editor de diagramas con bloques globales, autenticación y simulación Python.",
 };
 

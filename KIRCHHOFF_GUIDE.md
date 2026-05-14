@@ -33,7 +33,7 @@ Nodo F (Output)  ──┘
 ### 2. ✅ Visualización de Redes
 - **Líneas Bezier**: Las conexiones usan curvas suaves para mejor visualización
 - **Color de Selección**: Las conexiones seleccionadas se destacan en azul claro
-- **Información de Tipos**: Se validan tipos de datos (energy, air, water, etc.)
+- **Información de Tipos**: Se validan tipos de datos (energy, water, etc.)
 
 ### 3. ✅ Simulación Kirchhoff (Estructura preparada)
 La estructura de `Connection` permite:

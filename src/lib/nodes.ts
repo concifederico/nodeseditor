@@ -29,7 +29,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_out',
         name: 'Aire Comprimido',
         type: 'output',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',
@@ -98,7 +98,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_in',
         name: 'Entrada Aire',
         type: 'input',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',
@@ -121,7 +121,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_out',
         name: 'Salida Aire',
         type: 'output',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',
@@ -169,7 +169,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_in',
         name: 'Aire',
         type: 'input',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',
@@ -192,7 +192,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_out',
         name: 'Aire Filtrado',
         type: 'output',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',
@@ -252,7 +252,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_in',
         name: 'Aire',
         type: 'input',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',
@@ -275,7 +275,7 @@ export const DEFAULT_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
         id: 'air_out',
         name: 'Aire Regulado',
         type: 'output',
-        valueType: 'air',
+        valueType: 'number',
         properties: [
           {
             name: 'flow',

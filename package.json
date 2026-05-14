@@ -1,11 +1,12 @@
 {
-  "name": "nodeseditor",
+  "name": "factory-flow",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "eslint",
     "postinstall": "mkdir -p public/pyodide && cp -r node_modules/pyodide/* public/pyodide/"
   },

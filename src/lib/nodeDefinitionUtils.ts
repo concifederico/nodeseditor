@@ -32,7 +32,7 @@ export function createConnector(type: ConnectorType, index = 0): Connector {
     id: `${type}_${index + 1}`,
     name: type === 'input' ? `Entrada ${index + 1}` : `Salida ${index + 1}`,
     type,
-    valueType: 'air',
+    valueType: 'number',
     properties: [],
   };
 }

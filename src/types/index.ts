@@ -1,6 +1,6 @@
 // Node connector types
 export type ConnectorType = 'input' | 'output';
-export type ConnectorValueType = 'energy' | 'air' | 'water' | 'number' | 'string' | 'boolean';
+export type ConnectorValueType = 'energy' | 'water' | 'number' | 'string' | 'boolean';
 export type ConfigPropertyType = 'number' | 'string' | 'select' | 'boolean';
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];

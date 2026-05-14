@@ -62,36 +62,6 @@ function SelectedNodeProperties({
 
       {/* Properties */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Position properties */}
-        <div className="bg-slate-800 rounded p-3 border border-slate-700">
-          <h4 className="text-white font-semibold text-sm mb-3">Posición</h4>
-          <div className="space-y-2">
-            <div>
-              <label className="text-slate-300 text-xs block mb-1">X</label>
-              <input
-                type="number"
-                value={Math.round(selectedNode.x)}
-                onChange={() => {
-                  // This would require a separate action
-                }}
-                className="w-full px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
-                disabled
-              />
-            </div>
-            <div>
-              <label className="text-slate-300 text-xs block mb-1">Y</label>
-              <input
-                type="number"
-                value={Math.round(selectedNode.y)}
-                onChange={() => {
-                  // This would require a separate action
-                }}
-                className="w-full px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
-                disabled
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Node Properties */}
         <div className="bg-slate-800 rounded p-3 border border-slate-700">

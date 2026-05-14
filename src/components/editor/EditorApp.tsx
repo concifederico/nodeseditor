@@ -198,7 +198,7 @@ export default function EditorApp({ user }: EditorAppProps) {
   };
 
   const topbarTitle = useMemo(
-    () => (activeView === 'canvas' ? 'Canvas principal' : 'Biblioteca global'),
+    () => (activeView === 'canvas' ? 'Lienzo principal' : 'Biblioteca global'),
     [activeView]
   );
 
@@ -236,7 +236,7 @@ export default function EditorApp({ user }: EditorAppProps) {
                       : 'border-slate-700 bg-slate-800 text-slate-300'
                   }`}
                 >
-                  Canvas
+                  Lienzo
                 </button>
                 <button
                   type="button"

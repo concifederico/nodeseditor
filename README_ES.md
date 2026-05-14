@@ -6,7 +6,7 @@ Un editor interactivo de nodos construido con Next.js, React y TypeScript. Permi
 
 ### ✨ Funcionalidades Principales
 
-- **Canvas interactivo**: Editor SVG con soporte para pan y zoom
+- **Lienzo interactivo**: Editor SVG con soporte para pan y zoom
 - **Sistema de nodos**: Nodos redondeados con conectores dinámicos
 - **Conexiones**: Crea conexiones (lazos) entre nodos con validación
 - **Categorías de nodos**: 
@@ -18,12 +18,12 @@ Un editor interactivo de nodos construido con Next.js, React y TypeScript. Permi
 
 - **Configuración de nodos**: Panel de propiedades para ajustar parámetros
 - **Persistencia**: Guarda/carga proyectos en JSON
-- **Drag & Drop**: Arrastra nodos desde la barra de herramientas al canvas
+- **Drag & Drop**: Arrastra nodos desde la barra de herramientas al lienzo
 
 ### 🎨 Interfaz
 
 - **Toolbar izquierda**: Lista de componentes disponibles con drag & drop
-- **Canvas central**: Área de trabajo con grid de referencia
+- **Lienzo central**: Área de trabajo con grid de referencia
 - **Panel derecho**: Propiedades del nodo seleccionado
 
 ## Estructura del Proyecto
@@ -71,7 +71,7 @@ La aplicación estará disponible en `http://localhost:3000`
 
 ### Agregar Nodos
 
-1. Arrastra un componente desde la **barra izquierda** hacia el **canvas**
+1. Arrastra un componente desde la **barra izquierda** hacia el **lienzo**
 2. El nodo aparecerá en la posición donde lo sueltes
 
 ### Conectar Nodos
@@ -91,7 +91,7 @@ La aplicación estará disponible en `http://localhost:3000`
 - **Nodos**: Selecciona el nodo y haz clic en la ❌ roja en la esquina superior derecha
 - **Conexiones**: Selecciona la conexión y haz clic en la ❌ roja en el centro
 
-### Controles del Canvas
+### Controles del Lienzo
 
 - **Zoom**: Rueda del ratón
 - **Pan**: Botón central/derecho del ratón + movimiento
@@ -101,7 +101,7 @@ La aplicación estará disponible en `http://localhost:3000`
 
 - **Guardar**: Botón "Guardar" (archivo JSON)
 - **Cargar**: Botón "Cargar" (carga el proyecto más reciente)
-- **Limpiar**: Borra todos los nodos del canvas actual
+- **Limpiar**: Borra todos los nodos del lienzo actual
 
 ## Tipos de Nodos Disponibles
 
@@ -187,7 +187,7 @@ export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
 
 El estado de la aplicación se gestiona con Zustand. Las principales acciones son:
 
-- `addNode()`: Agregar un nodo al canvas
+- `addNode()`: Agregar un nodo al lienzo
 - `removeNode()`: Eliminar un nodo
 - `updateNodePosition()`: Mover un nodo
 - `updateNodeConfig()`: Cambiar configuración del nodo
@@ -207,7 +207,6 @@ Los proyectos se guardan en formato JSON en `data/canvases.json`. Cada proyecto 
 
 ### Tipos de Conectores
 - `energy`: Energía eléctrica
-- `air`: Aire comprimido
 - `water`: Agua
 - `number`: Valores numéricos
 - `string`: Texto

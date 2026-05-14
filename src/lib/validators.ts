@@ -21,7 +21,7 @@ const configPropertySchema = z.object({
 
 const connectorPropertySchema = z.object({
   name: z.string().min(1),
-  type: z.enum(['energy', 'air', 'water', 'number', 'string', 'boolean']),
+  type: z.enum(['energy', 'water', 'number', 'string', 'boolean']),
   unit: z.string().optional(),
   required: z.boolean(),
   defaultValue: z.union([z.string(), z.number(), z.boolean()]).optional(),
@@ -31,7 +31,7 @@ const connectorSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   type: z.enum(['input', 'output']),
-  valueType: z.enum(['energy', 'air', 'water', 'number', 'string', 'boolean']),
+  valueType: z.enum(['energy', 'water', 'number', 'string', 'boolean']),
   properties: z.array(connectorPropertySchema),
   position: z.object({ x: z.number(), y: z.number() }).optional(),
 });

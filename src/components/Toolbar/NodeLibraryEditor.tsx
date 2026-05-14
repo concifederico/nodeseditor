@@ -278,11 +278,17 @@ else:
                     ...current,
                     [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
                       itemIndex === index
-                        ? {
-                            ...item,
-                            name: e.target.value,
-                            id: slugifyNodePart(e.target.value, `${type}_${index + 1}`),
-                          }
+                        ? { ...item, name: e.target.value }
+                        : item
+                    ),
+                  }))
+                }
+                onBlur={(e) =>
+                  updateDraft((current) => ({
+                    ...current,
+                    [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? { ...item, id: slugifyNodePart(e.target.value, `${type}_${index + 1}`) }
                         : item
                     ),
                   }))
@@ -392,9 +398,18 @@ else:
                     ...current,
                     configProperties: current.configProperties.map((item, itemIndex) =>
                       itemIndex === index
+                        ? { ...item, label: e.target.value }
+                        : item
+                    ),
+                  }))
+                }
+                onBlur={(e) =>
+                  updateDraft((current) => ({
+                    ...current,
+                    configProperties: current.configProperties.map((item, itemIndex) =>
+                      itemIndex === index
                         ? {
                             ...item,
-                            label: e.target.value,
                             name: slugifyNodePart(e.target.value, `property_${index + 1}`),
                           }
                         : item
@@ -600,9 +615,11 @@ else:
                     type="text"
                     value={draft.name}
                     onChange={(e) =>
+                      updateDraft((current) => ({ ...current, name: e.target.value }))
+                    }
+                    onBlur={(e) =>
                       updateDraft((current) => ({
                         ...current,
-                        name: e.target.value,
                         id: slugifyNodePart(current.id || e.target.value, `custom_${Date.now()}`),
                       }))
                     }
