@@ -32,6 +32,26 @@ function defaultScriptForBlock(definition: NodeDefinition) {
   ].join('\n');
 }
 
+export function sanitizeConnectorValueType(valueType: string): string {
+  // Remove legacy 'air' type, replace with 'number'
+  if (valueType === 'air') return 'number';
+  return valueType;
+}
+
+function sanitizeConnectors(connectors: unknown): unknown {
+  if (!Array.isArray(connectors)) return connectors;
+  return connectors.map((c) => {
+    if (!c || typeof c !== 'object') return c;
+    const conn = c as Record<string, unknown>;
+    return {
+      ...conn,
+      valueType: typeof conn.valueType === 'string'
+        ? sanitizeConnectorValueType(conn.valueType)
+        : conn.valueType,
+    };
+  });
+}
+
 export function blockToNodeDefinition(block: Block): NodeDefinition {
   return {
     id: block.slug,
@@ -39,8 +59,8 @@ export function blockToNodeDefinition(block: Block): NodeDefinition {
     name: block.name,
     category: block.category,
     description: block.description,
-    inputs: block.inputs as unknown as NodeDefinition['inputs'],
-    outputs: block.outputs as unknown as NodeDefinition['outputs'],
+    inputs: sanitizeConnectors(block.inputs) as unknown as NodeDefinition['inputs'],
+    outputs: sanitizeConnectors(block.outputs) as unknown as NodeDefinition['outputs'],
     configProperties:
       block.configProperties as unknown as NodeDefinition['configProperties'],
     defaultScript: block.defaultScript,

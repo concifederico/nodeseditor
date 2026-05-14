@@ -24,7 +24,7 @@ interface NodeLibraryEditorProps {
 type TabDraft = NodeDefinition;
 
 const CONFIG_TYPES: ConfigPropertyType[] = ['string', 'number', 'boolean', 'select'];
-const CONNECTOR_TYPES = ['number', 'string', 'boolean'] as const;
+const CONNECTOR_TYPES = ['energy', 'water', 'number', 'string', 'boolean'] as const;
 
 export default function NodeLibraryEditor({
   onPersistDefinitions,
@@ -318,30 +318,124 @@ else:
               </select>
             </div>
 
-            <textarea
-              value={connector.properties
-                .map((property) => `${property.name}${property.unit ? ` (${property.unit})` : ''}`)
-                .join(', ')}
-              onChange={(e) =>
-                updateDraft((current) => ({
-                  ...current,
-                  [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
-                    itemIndex === index
-                      ? {
-                          ...item,
-                          properties: e.target.value
-                            .split(',')
-                            .map((part) => part.trim())
-                            .filter(Boolean)
-                            .map((part) => ({ name: slugifyNodePart(part, 'campo'), type: 'number', required: false })),
-                        }
-                      : item
-                  ),
-                }))
-              }
-              className="w-full px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 min-h-16"
-              placeholder="Campos del conector separados por coma"
-            />
+            <div className="space-y-2">
+              {connector.properties.map((prop, propIndex) => (
+                <div key={propIndex} className="flex items-start gap-2">
+                  <input
+                    type="text"
+                    value={prop.name}
+                    onChange={(e) =>
+                      updateDraft((current) => ({
+                        ...current,
+                        [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                properties: item.properties.map((p, pi) =>
+                                  pi === propIndex
+                                    ? { ...p, name: e.target.value }
+                                    : p
+                                ),
+                              }
+                            : item
+                        ),
+                      }))
+                    }
+                    className="flex-1 px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
+                    placeholder="Nombre del campo"
+                  />
+                  <input
+                    type="text"
+                    value={prop.unit || ''}
+                    onChange={(e) =>
+                      updateDraft((current) => ({
+                        ...current,
+                        [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                properties: item.properties.map((p, pi) =>
+                                  pi === propIndex
+                                    ? { ...p, unit: e.target.value }
+                                    : p
+                                ),
+                              }
+                            : item
+                        ),
+                      }))
+                    }
+                    className="w-16 px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
+                    placeholder="Unidad"
+                  />
+                  <label className="flex items-center gap-1 text-xs text-slate-400 shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={prop.required}
+                      onChange={(e) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  properties: item.properties.map((p, pi) =>
+                                    pi === propIndex
+                                      ? { ...p, required: e.target.checked }
+                                      : p
+                                  ),
+                                }
+                              : item
+                          ),
+                        }))
+                      }
+                      className="rounded"
+                    />
+                    Req.
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateDraft((current) => ({
+                        ...current,
+                        [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                properties: item.properties.filter((_, pi) => pi !== propIndex),
+                              }
+                            : item
+                        ),
+                      }))
+                    }
+                    className="text-red-400 hover:text-red-300 text-xs px-1 shrink-0"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  updateDraft((current) => ({
+                    ...current,
+                    [type === 'input' ? 'inputs' : 'outputs']: connectors.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? {
+                            ...item,
+                            properties: [
+                              ...item.properties,
+                              { name: `campo_${item.properties.length + 1}`, type: 'number' as const, required: false },
+                            ],
+                          }
+                        : item
+                    ),
+                  }))
+                }
+                className="text-xs text-cyan-300 hover:text-cyan-200"
+              >
+                + Campo
+              </button>
+            </div>
 
             <button
               type="button"
@@ -519,28 +613,76 @@ else:
             </div>
 
             {property.type === 'select' && (
-              <textarea
-                value={(property.options || []).map((option) => option.label).join(', ')}
-                onChange={(e) =>
-                  updateDraft((current) => ({
-                    ...current,
-                    configProperties: current.configProperties.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? {
-                            ...item,
-                            options: e.target.value
-                              .split(',')
-                              .map((part) => part.trim())
-                              .filter(Boolean)
-                              .map((part) => ({ label: part, value: part })),
-                          }
-                        : item
-                    ),
-                  }))
-                }
-                className="w-full px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 min-h-16"
-                placeholder="Opciones separadas por coma"
-              />
+              <div className="space-y-2">
+                {(property.options || []).map((option, optIndex) => (
+                  <div key={optIndex} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={option.label}
+                      onChange={(e) =>
+                        updateDraft((current) => ({
+                          ...current,
+                          configProperties: current.configProperties.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  options: (item.options || []).map((o, oi) =>
+                                    oi === optIndex
+                                      ? { label: e.target.value, value: e.target.value }
+                                      : o
+                                  ),
+                                }
+                              : item
+                          ),
+                        }))
+                      }
+                      className="flex-1 px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
+                      placeholder="Nombre de opción"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateDraft((current) => ({
+                          ...current,
+                          configProperties: current.configProperties.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  options: (item.options || []).filter((_, oi) => oi !== optIndex),
+                                }
+                              : item
+                          ),
+                        }))
+                      }
+                      className="text-red-400 hover:text-red-300 text-xs px-1 shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateDraft((current) => ({
+                      ...current,
+                      configProperties: current.configProperties.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? {
+                              ...item,
+                              options: [
+                                ...(item.options || []),
+                                { label: `Opción ${(item.options || []).length + 1}`, value: `Opción ${(item.options || []).length + 1}` },
+                              ],
+                            }
+                          : item
+                      ),
+                    }))
+                  }
+                  className="text-xs text-cyan-300 hover:text-cyan-200"
+                >
+                  + Opción
+                </button>
+              </div>
             )}
 
             <button

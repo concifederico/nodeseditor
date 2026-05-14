@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useCanvasStore } from '@/lib/store/canvasStore';
-import { Save, Trash2, FolderOpen } from 'lucide-react';
+import { Save, Trash2, FolderOpen, Play } from 'lucide-react';
 import OptimizationPanel from '@/components/Toolbar/OptimizationPanel';
+import { executeGraphSequentially } from '@/lib/simulation/executeGraph';
 
 interface ToolbarProps {
   onSave: () => void;
@@ -29,6 +30,9 @@ export default function Toolbar({
   const nodeDefinitions = useCanvasStore((state) => state.nodeDefinitions);
   const setDraggedNodeDef = useCanvasStore((state) => state.setDraggedNodeDef);
   const draggedNodeDef = useCanvasStore((state) => state.ui.draggedNodeDefId);
+  const updateNodeResourceUtilization = useCanvasStore((state) => state.updateNodeResourceUtilization);
+  const updateNodeExecutionResult = useCanvasStore((state) => state.updateNodeExecutionResult);
+  const [isRunningSim, setIsRunningSim] = useState(false);
 
   const handleDragStart = (definitionId: string) => {
     setDraggedNodeDef(definitionId);
@@ -40,6 +44,32 @@ export default function Toolbar({
 
   const handleAddNodeClick = (definitionId: string) => {
     addNode(definitionId, 120, 120);
+  };
+
+  const handleRunSimulation = async () => {
+    if (canvas.nodes.length === 0) return;
+    setIsRunningSim(true);
+    try {
+      await executeGraphSequentially({
+        nodes: canvas.nodes,
+        connections: canvas.connections,
+        definitions: nodeDefinitions,
+        runPythonScript: runPython,
+        onNodeUtilizationUpdate: (nodeId, utilization) => {
+          updateNodeResourceUtilization(nodeId, utilization);
+        },
+        onNodeComplete: (result) => {
+          updateNodeExecutionResult(result.nodeId, {
+            output: result.output,
+            outputByConnector: result.outputByConnector,
+          });
+        },
+      });
+    } catch (err) {
+      console.error('Simulation error:', err);
+    } finally {
+      setIsRunningSim(false);
+    }
   };
 
   return (
@@ -81,6 +111,15 @@ export default function Toolbar({
         >
           <Trash2 size={16} />
           Limpiar
+        </button>
+        <button
+          onClick={() => void handleRunSimulation()}
+          disabled={isRunningSim || canvas.nodes.length === 0}
+          className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Ejecutar simulación de todos los nodos"
+        >
+          <Play size={16} />
+          {isRunningSim ? 'Simulando...' : 'Simular'}
         </button>
       </div>
 
