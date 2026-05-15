@@ -1,0 +1,6 @@
+[build]
+  command = "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npx prisma migrate deploy && next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
