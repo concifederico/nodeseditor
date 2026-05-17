@@ -89,12 +89,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = user.role ?? ROLES.USER;
       }
 
-      if (token.sub && (!token.role || trigger === 'update')) {
+      // On every JWT refresh, verify role against DB and admin emails
+      if (token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true },
+          select: { role: true, email: true },
         });
-        token.role = normalizeRole(dbUser?.role);
+
+        if (dbUser?.email && adminEmails.has(dbUser.email.toLowerCase())) {
+          // Auto-promote to ADMIN if email is in admin list
+          if (dbUser.role !== ROLES.ADMIN) {
+            await prisma.user.update({
+              where: { id: token.sub },
+              data: { role: ROLES.ADMIN },
+            });
+          }
+          token.role = ROLES.ADMIN;
+        } else {
+          token.role = normalizeRole(dbUser?.role);
+        }
       }
 
       if (trigger === 'update' && session?.user?.role) {
